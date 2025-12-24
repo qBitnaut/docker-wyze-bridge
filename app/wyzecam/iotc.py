@@ -430,8 +430,8 @@ class WyzeIOTCSession:
             if frame_info.frame_size == 1 and len(frame_data) < 200:
                 logger.warning(
                     f"[PACKET-ANALYSIS] Len: {len(frame_data)}b, "
-                    f"TS: {frame_info.timestamp}, Key: {frame_info.is_keyframe}, "
-                    f"Codec: {frame_info.codec_id}"
+                    f"TS: {frame_info.timestamp}, "
+                    f"Data: {frame_data[:16].hex()}"
                 )
                 # continue
 
