@@ -206,11 +206,6 @@ class WyzeStream(Stream):
         self.tutk_stream_process = None
         self.state = StreamStatus.STOPPED
         return True
-# ... (skipping unchanged lines) ...
-def stop_and_wait(thread: Thread):
-    with contextlib.suppress(ValueError, AttributeError, RuntimeError):
-        if _safe_is_alive(thread):
-            thread.join(timeout=5)
 
     def enable(self) -> bool:
         if self.state == StreamStatus.DISABLED:
@@ -505,7 +500,7 @@ def start_tutk_stream(uri: str, stream: StreamTuple, queue: QueueTuple, state: c
 
 def stop_and_wait(thread: Thread):
     with contextlib.suppress(ValueError, AttributeError, RuntimeError):
-        if thread and thread.is_alive():
+        if _safe_is_alive(thread):
             thread.join(timeout=5)
 
 def setup_audio(sess: WyzeIOTCSession, uri: str) -> Thread:
