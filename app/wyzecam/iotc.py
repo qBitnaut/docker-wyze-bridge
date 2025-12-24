@@ -424,12 +424,6 @@ class WyzeIOTCSession:
 
             assert frame_info is not None, "Empty frame_info without an error!"
 
-            # Filter keep-alives/heartbeats that are flagged as frame_size 1 (SD)
-            # These are usually < 500 bytes, whereas real SD frames are > 10KB.
-            if frame_info.frame_size == 1 and len(frame_data) < 500:
-                # logger.debug(f"[IOTC] Skipped small keep-alive packet: {len(frame_data)}b")
-                continue
-
             if self._invalid_frame_size(frame_info, have_key_frame):
                 have_key_frame = False
                 continue
@@ -595,6 +589,7 @@ class WyzeIOTCSession:
                     continue
 
                 assert frame_info is not None, "Empty frame_info without an error!"
+                logger.debug(f"[IOTC] Audio frame: {len(frame_data)} bytes. Codec: {frame_info.codec_id}")
                 self._sync_audio_frame(frame_info)
 
                 yield frame_data
