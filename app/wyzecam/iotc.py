@@ -424,16 +424,15 @@ class WyzeIOTCSession:
 
             assert frame_info is not None, "Empty frame_info without an error!"
 
-            # Filter keep-alives (usually < 50 bytes) to prevent timestamp corruption
-            # Real SD frames are much larger, but static P-frames might be ~150b.
-            # Logging to analyze structure.
+            # Smart Filter for Wyze Cam v4 Audio (Hollow Stream Fix)
+            # - Drop packets <= 20 bytes (always keep-alives)
+            # - Drop packets < 40 bytes if they end in 0x03 (keep-alive signature)
+            # - Allow other small packets (valid P-frames needed for stream stability)
             if frame_info.frame_size == 1 and len(frame_data) < 200:
-                logger.warning(
-                    f"[PACKET-ANALYSIS] Len: {len(frame_data)}b, "
-                    f"TS: {frame_info.timestamp}, "
-                    f"Data: {frame_data[:16].hex()}"
-                )
-                # continue
+                if len(frame_data) <= 20:
+                    continue
+                if len(frame_data) < 40 and frame_data.endswith(b'\x03'):
+                    continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
                 have_key_frame = False
