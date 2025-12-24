@@ -424,6 +424,9 @@ class WyzeIOTCSession:
 
             assert frame_info is not None, "Empty frame_info without an error!"
 
+            if frame_info.frame_size == 1:
+                logger.warning(f"[DEBUG] Frame size 1 detected. Data len: {len(frame_data)}")
+            
             if frame_info.frame_size == 1 and len(frame_data) <= 1:
                 logger.debug(f"[IOTC] Skipped 1-byte packet: {frame_info.frame_size=}")
                 continue
