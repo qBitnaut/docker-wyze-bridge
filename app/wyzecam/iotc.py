@@ -631,7 +631,13 @@ class WyzeIOTCSession:
                 os.set_blocking(audio_pipe.fileno(), False)
                 self.audio_pipe_ready = True
                 for frame_data in self.recv_audio_data():
-                    # Wyze V4 sends RAW AAC. FFMPEG needs ADTS headers.
+                    # Wyze V4 sends raw AAC. FFMPEG needs ADTS headers.
+                    # Also, V4 sends small garbage packets (keep-alives) in the audio stream.
+                    # We MUST drop these to prevent decoding errors.
+                    if len(frame_data) < 50:
+                        logger.warning(f"[AUDIO-FILTER] Dropped small packet ({len(frame_data)}b)")
+                        continue
+
                     # We manually wrap the raw frame in a 7-byte ADTS header.
                     # Fixed for 16000Hz (Index 8), Mono (1 Channel).
                     # TODO: Make dynamic if other cameras use different rates.
