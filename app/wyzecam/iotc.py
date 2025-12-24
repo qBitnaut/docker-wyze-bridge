@@ -630,13 +630,38 @@ class WyzeIOTCSession:
             with open(fifo_path, "wb", buffering=0) as audio_pipe:
                 os.set_blocking(audio_pipe.fileno(), False)
                 self.audio_pipe_ready = True
+                
+                # Pre-calc Header constants for 16kHz Mono AAC LC
+                profile = 2  # AAC LC
+                freq_idx = 8 # 16000Hz
+                chan_cfg = 1 # Mono
+                
                 for frame_data in self.recv_audio_data():
-                    # Debug: Log content of small packets to check for Headers/Config
+                    # Filter garbage (Keep-Alives)
                     if len(frame_data) < 50:
-                        logger.warning(f"[AUDIO-DEBUG] Small Packet {len(frame_data)}b: {frame_data.hex()}")
+                        continue
                     
+                    # Detect existing ADTS Header (Sync Word 0xFFF + MPEG id)
+                    # 0xFF 0xF1 = Sync(FFF) + ID(0) + Layer(00) + Abs(1)
+                    if frame_data[0] == 0xFF and (frame_data[1] & 0xF0) == 0xF0:
+                       # Already has header, write as is
+                       with contextlib.suppress(BlockingIOError):
+                            audio_pipe.write(frame_data)
+                       continue
+
+                    # No Header? Wrap it.
+                    frame_len = len(frame_data) + 7
+                    adts_header = bytearray(7)
+                    adts_header[0] = 0xFF
+                    adts_header[1] = 0xF1
+                    adts_header[2] = (profile - 1) << 6 | (freq_idx << 2) | (chan_cfg >> 2)
+                    adts_header[3] = ((chan_cfg & 3) << 6) | (frame_len >> 11)
+                    adts_header[4] = (frame_len & 0x7FF) >> 3
+                    adts_header[5] = ((frame_len & 7) << 5) | 0x1F
+                    adts_header[6] = 0xFC
+
                     with contextlib.suppress(BlockingIOError):
-                        audio_pipe.write(frame_data)
+                        audio_pipe.write(adts_header + frame_data)
 
         except IOError as ex:
             if ex.errno != errno.EPIPE:  # Broken pipe
