@@ -651,19 +651,20 @@ class WyzeIOTCSession:
         gap = float(f"{frame_info.timestamp}.{frame_info.timestamp_ms}") - self.frame_ts
         logger.warning(f"[AUDIO-SYNC] Gap: {gap:.4f}s (AudioTS={frame_info.timestamp} - VideoTS={self.frame_ts})")
 
-        if abs(gap) > 5:
-            logger.debug(f"[IOTC] Audio out of sync {gap=}")
-            self.clear_buffer()
+        # Disable aggressive sync for V4 cameras with jittery timestamps
+        # if abs(gap) > 5:
+        #     logger.debug(f"[IOTC] Audio out of sync {gap=}")
+        #     self.clear_buffer()
 
-        if gap < -1:
-            logger.debug(f"[IOTC] Audio behind video.. {gap=}")
-            self.flush_pipe("audio", gap)
+        # if gap < -1:
+        #     logger.debug(f"[IOTC] Audio behind video.. {gap=}")
+        #     self.flush_pipe("audio", gap)
 
-        if gap > 0:
-            self._sleep_buffer += gap
-        if gap > 1:
-            logger.debug(f"[ITOC] Audio ahead of video.. {gap=}")
-            time.sleep(gap / 2)
+        # if gap > 0:
+        #     self._sleep_buffer += gap
+        # if gap > 1:
+        #     logger.debug(f"[ITOC] Audio ahead of video.. {gap=}")
+        #     time.sleep(gap / 2)
 
     def get_audio_sample_rate(self) -> int:
         """Attempt to get the audio sample rate."""
