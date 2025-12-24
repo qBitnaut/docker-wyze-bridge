@@ -438,10 +438,10 @@ class WyzeIOTCSession:
                 
                 if should_drop:
                     if have_key_frame:
-                        logger.debug(f"[FILTER] Updated heartbeat TS={frame_info.timestamp} via Dropped {len(frame_data)}b Packet")
+                        logger.warning(f"[FILTER] Updated heartbeat TS={frame_info.timestamp} via Dropped {len(frame_data)}b Packet")
                         self._video_frame_slow(frame_info)
                     else:
-                        logger.debug(f"[FILTER] Dropped {len(frame_data)}b packet (No heartbeat - No Keyframe yet)")
+                        logger.warning(f"[FILTER] Dropped {len(frame_data)}b packet (No heartbeat - No Keyframe yet)")
                     continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
@@ -609,7 +609,7 @@ class WyzeIOTCSession:
                     continue
 
                 assert frame_info is not None, "Empty frame_info without an error!"
-                logger.debug(f"[AUDIO-DEBUG] Recv {len(frame_data)}b audio. TS={frame_info.timestamp}")
+                logger.warning(f"[AUDIO-DEBUG] Recv {len(frame_data)}b audio. TS={frame_info.timestamp}")
                 self._sync_audio_frame(frame_info)
 
                 yield frame_data
@@ -649,7 +649,7 @@ class WyzeIOTCSession:
             return
 
         gap = float(f"{frame_info.timestamp}.{frame_info.timestamp_ms}") - self.frame_ts
-        logger.debug(f"[AUDIO-SYNC] Gap: {gap:.4f}s (AudioTS={frame_info.timestamp} - VideoTS={self.frame_ts})")
+        logger.warning(f"[AUDIO-SYNC] Gap: {gap:.4f}s (AudioTS={frame_info.timestamp} - VideoTS={self.frame_ts})")
 
         if abs(gap) > 5:
             logger.debug(f"[IOTC] Audio out of sync {gap=}")
