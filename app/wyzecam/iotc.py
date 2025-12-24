@@ -424,11 +424,10 @@ class WyzeIOTCSession:
 
             assert frame_info is not None, "Empty frame_info without an error!"
 
-            if frame_info.frame_size == 1:
-                logger.warning(f"[DEBUG] Frame size 1 detected. Data len: {len(frame_data)}")
-            
-            if frame_info.frame_size == 1 and len(frame_data) <= 1:
-                logger.debug(f"[IOTC] Skipped 1-byte packet: {frame_info.frame_size=}")
+            # Filter keep-alives/heartbeats that are flagged as frame_size 1 (SD)
+            # These are usually < 500 bytes, whereas real SD frames are > 10KB.
+            if frame_info.frame_size == 1 and len(frame_data) < 500:
+                # logger.debug(f"[IOTC] Skipped small keep-alive packet: {len(frame_data)}b")
                 continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
@@ -521,8 +520,7 @@ class WyzeIOTCSession:
         2K returns frame_size=4
         """
         alt = self.preferred_frame_size + (1 if self.preferred_frame_size >= 3 else 3)
-
-        return {self.preferred_frame_size, int(os.getenv("IGNORE_RES", alt))}
+        return {self.preferred_frame_size, int(os.getenv("IGNORE_RES", alt)), 1}
 
     def sync_camera_time(self, wait: bool = False):
         with contextlib.suppress(tutk_ioctl_mux.Empty, tutk.TutkError):
