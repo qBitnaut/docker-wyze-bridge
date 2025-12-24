@@ -30,6 +30,31 @@ from wyzebridge.wyze_control import camera_control
 
 NET_MODE = {0: "P2P", 1: "RELAY", 2: "LAN"}
 
+def _safe_is_alive(process_or_thread) -> bool:
+    """
+    Safely check if a process/thread is alive, handling Python 3.13's stricter checks.
+
+    Python 3.13 raises AssertionError("can only test a child process")
+    when is_alive() is called from a different process than the parent.
+    This can happen during signal handling or when stopping streams.
+
+    Args:
+        process_or_thread: A multiprocessing.Process or threading.Thread object
+
+    Returns:
+        bool: True if alive, False if not alive or if state cannot be determined
+    """
+    if process_or_thread is None:
+        return False
+    try:
+        return process_or_thread.is_alive()
+    except (AssertionError, ValueError, AttributeError, RuntimeError):
+        # AssertionError: Python 3.13 "can only test a child process"
+        # ValueError: process object closed
+        # AttributeError: process already cleaned up
+        # RuntimeError: various multiprocessing errors
+        return False
+
 StreamTuple = namedtuple("stream", ["user", "camera", "options"])
 QueueTuple = namedtuple("queue", ["cam_resp", "cam_cmd"])
 
@@ -172,15 +197,20 @@ class WyzeStream(Stream):
         self._clear_mp_queue()
         self.start_time = 0
         self.state = StreamStatus.STOPPING
-        if self.tutk_stream_process and self.tutk_stream_process.is_alive():
+        if self.tutk_stream_process and _safe_is_alive(self.tutk_stream_process):
             with contextlib.suppress(ValueError, AttributeError, RuntimeError):
-                if self.tutk_stream_process.is_alive():
+                if _safe_is_alive(self.tutk_stream_process):
                     self.tutk_stream_process.terminate()
                     self.tutk_stream_process.join(5)
 
         self.tutk_stream_process = None
         self.state = StreamStatus.STOPPED
         return True
+# ... (skipping unchanged lines) ...
+def stop_and_wait(thread: Thread):
+    with contextlib.suppress(ValueError, AttributeError, RuntimeError):
+        if _safe_is_alive(thread):
+            thread.join(timeout=5)
 
     def enable(self) -> bool:
         if self.state == StreamStatus.DISABLED:
