@@ -425,10 +425,11 @@ class WyzeIOTCSession:
             assert frame_info is not None, "Empty frame_info without an error!"
 
             # Filter keep-alives (usually < 50 bytes) to prevent timestamp corruption
-            # Real SD frames are much larger.
-            if frame_info.frame_size == 1 and len(frame_data) < 200:
-                logger.warning(f"[FILTER-DEBUG] Would skip packet: {len(frame_data)}b, FrameSize: {frame_info.frame_size}")
-                # continue
+            # Real SD frames are much larger, but static P-frames might be ~150b.
+            # Lowered threshold to 100 to avoid starving stream.
+            if frame_info.frame_size == 1 and len(frame_data) < 100:
+                # logger.warning(f"[FILTER] Skip: {len(frame_data)}b, Key: {frame_info.is_keyframe}")
+                continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
                 have_key_frame = False
