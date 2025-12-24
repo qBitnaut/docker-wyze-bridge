@@ -428,10 +428,17 @@ class WyzeIOTCSession:
             # - Drop packets <= 20 bytes (always keep-alives)
             # - Drop packets < 40 bytes if they end in 0x03 (keep-alive signature)
             # - Allow other small packets (valid P-frames needed for stream stability)
+            # - CRITICAL: Update timestamp (heartbeat) before dropping to prevent audio desync!
             if frame_info.frame_size == 1 and len(frame_data) < 200:
+                should_drop = False
                 if len(frame_data) <= 20:
-                    continue
-                if len(frame_data) < 40 and frame_data.endswith(b'\x03'):
+                    should_drop = True
+                elif len(frame_data) < 40 and frame_data.endswith(b'\x03'):
+                    should_drop = True
+                
+                if should_drop:
+                    if have_key_frame:
+                        self._video_frame_slow(frame_info)
                     continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
