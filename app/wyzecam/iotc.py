@@ -426,10 +426,14 @@ class WyzeIOTCSession:
 
             # Filter keep-alives (usually < 50 bytes) to prevent timestamp corruption
             # Real SD frames are much larger, but static P-frames might be ~150b.
-            # Lowered threshold to 100 to avoid starving stream.
-            if frame_info.frame_size == 1 and len(frame_data) < 100:
-                # logger.warning(f"[FILTER] Skip: {len(frame_data)}b, Key: {frame_info.is_keyframe}")
-                continue
+            # Logging to analyze structure.
+            if frame_info.frame_size == 1 and len(frame_data) < 200:
+                logger.warning(
+                    f"[PACKET-ANALYSIS] Len: {len(frame_data)}b, "
+                    f"TS: {frame_info.timestamp}, Key: {frame_info.is_keyframe}, "
+                    f"Codec: {frame_info.codec_id}"
+                )
+                # continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
                 have_key_frame = False
