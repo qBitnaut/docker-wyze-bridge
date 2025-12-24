@@ -427,7 +427,8 @@ class WyzeIOTCSession:
             # Filter keep-alives (usually < 50 bytes) to prevent timestamp corruption
             # Real SD frames are much larger.
             if frame_info.frame_size == 1 and len(frame_data) < 200:
-                continue
+                logger.warning(f"[FILTER-DEBUG] Would skip packet: {len(frame_data)}b, FrameSize: {frame_info.frame_size}")
+                # continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
                 have_key_frame = False
