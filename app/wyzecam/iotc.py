@@ -506,7 +506,8 @@ class WyzeIOTCSession:
             logger.debug(f"[IOTC] video slow {gap=}")
             # self.flush_pipe("audio", gap)
         if gap > 0:
-            self._sleep_buffer += gap
+            pass
+            # self._sleep_buffer += gap
 
     def _handle_frame_error(self, err_no: int) -> None:
         """Handle errors that occur when receiving frame data."""
