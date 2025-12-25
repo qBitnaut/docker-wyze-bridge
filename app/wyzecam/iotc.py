@@ -501,10 +501,10 @@ class WyzeIOTCSession:
 
         if gap > 5:
             logger.info(f"[IOTC]] video super slow {gap=}")
-            self.clear_buffer()
+            # self.clear_buffer()
         if gap > 1:
             logger.debug(f"[IOTC] video slow {gap=}")
-            self.flush_pipe("audio", gap)
+            # self.flush_pipe("audio", gap)
         if gap > 0:
             self._sleep_buffer += gap
 
