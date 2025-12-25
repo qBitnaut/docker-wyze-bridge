@@ -37,7 +37,7 @@ def get_ffmpeg_cmd(
     livestream = get_livestream_cmd(uri)
     audio_in = "-f lavfi -i anullsrc=cl=mono" if livestream else ""
     audio_out = "aac"
-    thread_queue = "-thread_queue_size 8 -analyzeduration 32 -probesize 32"
+    thread_queue = "-thread_queue_size 1024 -analyzeduration 32 -probesize 32"
 
     if audio and "codec" in audio:
         # `Option sample_rate not found.` if we try to specify -ar for aac:
@@ -80,7 +80,7 @@ def get_ffmpeg_cmd(
         + (["-map", "1:a", "-c:a", audio_out] if audio_in else [])
         + (a_options if audio and audio_out != "copy" else [])
         + ["-fps_mode", "passthrough", "-flush_packets", "1"]
-        + ["-rtbufsize", "1"]
+        # + ["-rtbufsize", "1"]
         + ["-f", "tee"]
         + [rtsp_ss + livestream]
     )
