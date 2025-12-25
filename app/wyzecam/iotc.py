@@ -437,11 +437,14 @@ class WyzeIOTCSession:
                     should_drop = True
                 
                 if should_drop:
+                    if "hall" in self.camera.nickname.lower():
+                        if have_key_frame:
+                            logger.warning(f"[FILTER] Updated heartbeat TS={frame_info.timestamp} via Dropped {len(frame_data)}b Packet")
+                        else:
+                            logger.warning(f"[FILTER] Dropped {len(frame_data)}b packet (No heartbeat - No Keyframe yet)")
+                    
                     if have_key_frame:
-                        logger.warning(f"[FILTER] Updated heartbeat TS={frame_info.timestamp} via Dropped {len(frame_data)}b Packet")
                         self._video_frame_slow(frame_info)
-                    else:
-                        logger.warning(f"[FILTER] Dropped {len(frame_data)}b packet (No heartbeat - No Keyframe yet)")
                     continue
 
             if self._invalid_frame_size(frame_info, have_key_frame):
@@ -659,6 +662,9 @@ class WyzeIOTCSession:
                     adts_header[4] = (frame_len & 0x7FF) >> 3
                     adts_header[5] = ((frame_len & 7) << 5) | 0x1F
                     adts_header[6] = 0xFC
+
+                    if "hall" in self.camera.nickname.lower():
+                        logger.debug(f"[AUDIO-WRAP] Wrapped {len(frame_data)}b packet for {self.camera.nickname}")
 
                     with contextlib.suppress(BlockingIOError):
                         audio_pipe.write(adts_header + frame_data)

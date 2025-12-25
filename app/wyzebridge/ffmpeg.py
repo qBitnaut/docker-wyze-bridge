@@ -72,6 +72,7 @@ def get_ffmpeg_cmd(
         + env_cam("FFMPEG_FLAGS", uri, flags).strip("'\"\n ").split()
         + thread_queue.split()
         + (["-hwaccel", h264_enc, "-hwaccel_output_format", h264_enc] if h264_enc in {"vaapi", "qsv"} else [])
+        + ["-use_wallclock_as_timestamps", "1"]
         + ["-f", vcodec, "-i", "pipe:0"]
         + audio_in.split()
         + ["-map", "0:v", "-c:v"]
