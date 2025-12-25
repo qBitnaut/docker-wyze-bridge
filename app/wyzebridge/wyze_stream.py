@@ -455,13 +455,20 @@ def start_tutk_stream(uri: str, stream: StreamTuple, queue: QueueTuple, state: c
     control_thread = audio_thread = None
     try:
         with WyzeIOTC() as iotc, iotc.session(stream, state) as sess:
-            assert state.value >= StreamStatus.CONNECTING, "Stream Stopped"
+            if state.value < StreamStatus.CONNECTING:
+                logger.debug("Stream stopped before parameter fetch")
+                return
+                
             v_codec, audio = get_cam_params(sess, uri)
             control_thread = setup_control(sess, queue) if not stream.options.substream else None
             audio_thread = setup_audio(sess, uri) if sess.enable_audio else None
 
             ffmpeg_cmd = get_ffmpeg_cmd(uri, v_codec, audio, stream.camera.is_vertical)
-            assert state.value >= StreamStatus.CONNECTING, "Stream Stopped"
+            
+            if state.value < StreamStatus.CONNECTING:
+                logger.debug("Stream stopped before FFMPEG start")
+                return
+
             state.value = StreamStatus.CONNECTED
             with Popen(ffmpeg_cmd, stdin=PIPE, stderr=None) as ffmpeg:
                 if ffmpeg.stdin is not None:
